@@ -20,7 +20,7 @@
       margin-bottom: 20px;
     }
 
-    video {
+    video, canvas {
       width: 100%;
       max-width: 480px;
       height: auto;
@@ -30,9 +30,16 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
+    .button-group {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
     button {
-      margin-top: 20px;
-      padding: 12px 24px;
+      padding: 12px 20px;
       font-size: 16px;
       border: none;
       background: #00796b;
@@ -51,9 +58,19 @@
 
   <h2>Truy cập Camera Trực Tiếp</h2>
   <video id="camera" autoplay playsinline muted></video>
-  <button onclick="startCamera()">Bắt đầu Camera</button>
+  <canvas id="snapshot" style="display: none;"></canvas>
+
+  <div class="button-group">
+    <button onclick="startCamera()">Bắt đầu Camera</button>
+    <button onclick="capturePhoto()">Chụp Ảnh</button>
+    <button onclick="downloadPhoto()">Lưu Ảnh</button>
+    <button onclick="processPhoto()">Xử lý Ảnh</button>
+  </div>
 
   <script>
+    let currentStream = null;
+    let capturedDataUrl = null;
+
     async function startCamera() {
       const video = document.getElementById('camera');
 
@@ -65,6 +82,7 @@
           audio: false
         });
 
+        currentStream = stream;
         video.srcObject = stream;
       } catch (err) {
         console.warn("Không thể truy cập camera sau, thử camera mặc định:", err.message);
@@ -74,11 +92,45 @@
             video: true,
             audio: false
           });
+          currentStream = fallbackStream;
           video.srcObject = fallbackStream;
         } catch (fallbackError) {
           alert("Không thể truy cập bất kỳ camera nào: " + fallbackError.message);
         }
       }
+    }
+
+    function capturePhoto() {
+      const video = document.getElementById('camera');
+      const canvas = document.getElementById('snapshot');
+      const context = canvas.getContext('2d');
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      capturedDataUrl = canvas.toDataURL('image/png');
+      const newTab = window.open();
+      newTab.document.write('<img src="' + capturedDataUrl + '" alt="Ảnh chụp">');
+    }
+
+    function downloadPhoto() {
+      if (!capturedDataUrl) {
+        alert("Bạn cần chụp ảnh trước khi lưu!");
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = capturedDataUrl;
+      a.download = 'snapshot.png';
+      a.click();
+    }
+
+    function processPhoto() {
+      if (!capturedDataUrl) {
+        alert("Bạn cần chụp ảnh trước khi xử lý!");
+        return;
+      }
+      alert("Chức năng xử lý ảnh đang được phát triển!");
     }
   </script>
 
